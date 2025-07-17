@@ -729,6 +729,853 @@ impl LspClient {
         }
     }
 
+    /// Get type definition for a symbol.
+    pub async fn get_type_definition(
+        &self,
+        server_id: &str,
+        uri: &str,
+        position: Position,
+    ) -> Result<Option<GotoDefinitionResponse>> {
+        let server = self
+            .get_server(server_id)
+            .ok_or_else(|| LspError::server_not_found(server_id))?;
+
+        let params = GotoDefinitionParams {
+            text_document_position_params: TextDocumentPositionParams {
+                text_document: TextDocumentIdentifier {
+                    uri: Uri::from_str(uri).map_err(|_| LspError::invalid_uri(uri))?,
+                },
+                position,
+            },
+            work_done_progress_params: WorkDoneProgressParams::default(),
+            partial_result_params: PartialResultParams::default(),
+        };
+
+        let response = server
+            .read()
+            .await
+            .request(
+                "textDocument/typeDefinition".to_string(),
+                Some(serde_json::to_value(params)?),
+            )
+            .await?;
+
+        if response.is_null() {
+            Ok(None)
+        } else {
+            let definition: GotoDefinitionResponse = serde_json::from_value(response)?;
+            Ok(Some(definition))
+        }
+    }
+
+    /// Get implementation for a symbol.
+    pub async fn get_implementation(
+        &self,
+        server_id: &str,
+        uri: &str,
+        position: Position,
+    ) -> Result<Option<GotoDefinitionResponse>> {
+        let server = self
+            .get_server(server_id)
+            .ok_or_else(|| LspError::server_not_found(server_id))?;
+
+        let params = GotoDefinitionParams {
+            text_document_position_params: TextDocumentPositionParams {
+                text_document: TextDocumentIdentifier {
+                    uri: Uri::from_str(uri).map_err(|_| LspError::invalid_uri(uri))?,
+                },
+                position,
+            },
+            work_done_progress_params: WorkDoneProgressParams::default(),
+            partial_result_params: PartialResultParams::default(),
+        };
+
+        let response = server
+            .read()
+            .await
+            .request(
+                "textDocument/implementation".to_string(),
+                Some(serde_json::to_value(params)?),
+            )
+            .await?;
+
+        if response.is_null() {
+            Ok(None)
+        } else {
+            let implementation: GotoDefinitionResponse = serde_json::from_value(response)?;
+            Ok(Some(implementation))
+        }
+    }
+
+    /// Get document highlights for a position.
+    pub async fn get_document_highlights(
+        &self,
+        server_id: &str,
+        uri: &str,
+        position: Position,
+    ) -> Result<Option<Vec<DocumentHighlight>>> {
+        let server = self
+            .get_server(server_id)
+            .ok_or_else(|| LspError::server_not_found(server_id))?;
+
+        let params = DocumentHighlightParams {
+            text_document_position_params: TextDocumentPositionParams {
+                text_document: TextDocumentIdentifier {
+                    uri: Uri::from_str(uri).map_err(|_| LspError::invalid_uri(uri))?,
+                },
+                position,
+            },
+            work_done_progress_params: WorkDoneProgressParams::default(),
+            partial_result_params: PartialResultParams::default(),
+        };
+
+        let response = server
+            .read()
+            .await
+            .request(
+                "textDocument/documentHighlight".to_string(),
+                Some(serde_json::to_value(params)?),
+            )
+            .await?;
+
+        if response.is_null() {
+            Ok(None)
+        } else {
+            let highlights: Vec<DocumentHighlight> = serde_json::from_value(response)?;
+            Ok(Some(highlights))
+        }
+    }
+
+    /// Get code lens for a document.
+    pub async fn get_code_lens(
+        &self,
+        server_id: &str,
+        uri: &str,
+    ) -> Result<Option<Vec<CodeLens>>> {
+        let server = self
+            .get_server(server_id)
+            .ok_or_else(|| LspError::server_not_found(server_id))?;
+
+        let params = CodeLensParams {
+            text_document: TextDocumentIdentifier {
+                uri: Uri::from_str(uri).map_err(|_| LspError::invalid_uri(uri))?,
+            },
+            work_done_progress_params: WorkDoneProgressParams::default(),
+            partial_result_params: PartialResultParams::default(),
+        };
+
+        let response = server
+            .read()
+            .await
+            .request(
+                "textDocument/codeLens".to_string(),
+                Some(serde_json::to_value(params)?),
+            )
+            .await?;
+
+        if response.is_null() {
+            Ok(None)
+        } else {
+            let code_lens: Vec<CodeLens> = serde_json::from_value(response)?;
+            Ok(Some(code_lens))
+        }
+    }
+
+    /// Resolve a code lens.
+    pub async fn resolve_code_lens(
+        &self,
+        server_id: &str,
+        code_lens: CodeLens,
+    ) -> Result<CodeLens> {
+        let server = self
+            .get_server(server_id)
+            .ok_or_else(|| LspError::server_not_found(server_id))?;
+
+        let response = server
+            .read()
+            .await
+            .request(
+                "codeLens/resolve".to_string(),
+                Some(serde_json::to_value(code_lens)?),
+            )
+            .await?;
+
+        let resolved_lens: CodeLens = serde_json::from_value(response)?;
+        Ok(resolved_lens)
+    }
+
+    /// Get document links.
+    pub async fn get_document_links(
+        &self,
+        server_id: &str,
+        uri: &str,
+    ) -> Result<Option<Vec<DocumentLink>>> {
+        let server = self
+            .get_server(server_id)
+            .ok_or_else(|| LspError::server_not_found(server_id))?;
+
+        let params = DocumentLinkParams {
+            text_document: TextDocumentIdentifier {
+                uri: Uri::from_str(uri).map_err(|_| LspError::invalid_uri(uri))?,
+            },
+            work_done_progress_params: WorkDoneProgressParams::default(),
+            partial_result_params: PartialResultParams::default(),
+        };
+
+        let response = server
+            .read()
+            .await
+            .request(
+                "textDocument/documentLink".to_string(),
+                Some(serde_json::to_value(params)?),
+            )
+            .await?;
+
+        if response.is_null() {
+            Ok(None)
+        } else {
+            let links: Vec<DocumentLink> = serde_json::from_value(response)?;
+            Ok(Some(links))
+        }
+    }
+
+    /// Resolve a document link.
+    pub async fn resolve_document_link(
+        &self,
+        server_id: &str,
+        link: DocumentLink,
+    ) -> Result<DocumentLink> {
+        let server = self
+            .get_server(server_id)
+            .ok_or_else(|| LspError::server_not_found(server_id))?;
+
+        let response = server
+            .read()
+            .await
+            .request(
+                "documentLink/resolve".to_string(),
+                Some(serde_json::to_value(link)?),
+            )
+            .await?;
+
+        let resolved_link: DocumentLink = serde_json::from_value(response)?;
+        Ok(resolved_link)
+    }
+
+    /// Get document colors.
+    pub async fn get_document_colors(
+        &self,
+        server_id: &str,
+        uri: &str,
+    ) -> Result<Vec<ColorInformation>> {
+        let server = self
+            .get_server(server_id)
+            .ok_or_else(|| LspError::server_not_found(server_id))?;
+
+        let params = DocumentColorParams {
+            text_document: TextDocumentIdentifier {
+                uri: Uri::from_str(uri).map_err(|_| LspError::invalid_uri(uri))?,
+            },
+            work_done_progress_params: WorkDoneProgressParams::default(),
+            partial_result_params: PartialResultParams::default(),
+        };
+
+        let response = server
+            .read()
+            .await
+            .request(
+                "textDocument/documentColor".to_string(),
+                Some(serde_json::to_value(params)?),
+            )
+            .await?;
+
+        let colors: Vec<ColorInformation> = serde_json::from_value(response)?;
+        Ok(colors)
+    }
+
+    /// Get color presentations.
+    pub async fn get_color_presentations(
+        &self,
+        server_id: &str,
+        uri: &str,
+        color: Color,
+        range: Range,
+    ) -> Result<Vec<ColorPresentation>> {
+        let server = self
+            .get_server(server_id)
+            .ok_or_else(|| LspError::server_not_found(server_id))?;
+
+        let params = ColorPresentationParams {
+            text_document: TextDocumentIdentifier {
+                uri: Uri::from_str(uri).map_err(|_| LspError::invalid_uri(uri))?,
+            },
+            color,
+            range,
+            work_done_progress_params: WorkDoneProgressParams::default(),
+            partial_result_params: PartialResultParams::default(),
+        };
+
+        let response = server
+            .read()
+            .await
+            .request(
+                "textDocument/colorPresentation".to_string(),
+                Some(serde_json::to_value(params)?),
+            )
+            .await?;
+
+        let presentations: Vec<ColorPresentation> = serde_json::from_value(response)?;
+        Ok(presentations)
+    }
+
+    /// Format document range.
+    pub async fn format_document_range(
+        &self,
+        server_id: &str,
+        uri: &str,
+        range: Range,
+        options: FormattingOptions,
+    ) -> Result<Vec<TextEdit>> {
+        let server = self
+            .get_server(server_id)
+            .ok_or_else(|| LspError::server_not_found(server_id))?;
+
+        let params = DocumentRangeFormattingParams {
+            text_document: TextDocumentIdentifier {
+                uri: Uri::from_str(uri).map_err(|_| LspError::invalid_uri(uri))?,
+            },
+            range,
+            options,
+            work_done_progress_params: WorkDoneProgressParams::default(),
+        };
+
+        let response = server
+            .read()
+            .await
+            .request(
+                "textDocument/rangeFormatting".to_string(),
+                Some(serde_json::to_value(params)?),
+            )
+            .await?;
+
+        let edits: Vec<TextEdit> = serde_json::from_value(response)?;
+        Ok(edits)
+    }
+
+    /// Format document on type.
+    pub async fn format_document_on_type(
+        &self,
+        server_id: &str,
+        uri: &str,
+        position: Position,
+        ch: String,
+        options: FormattingOptions,
+    ) -> Result<Vec<TextEdit>> {
+        let server = self
+            .get_server(server_id)
+            .ok_or_else(|| LspError::server_not_found(server_id))?;
+
+        let params = DocumentOnTypeFormattingParams {
+            text_document_position: TextDocumentPositionParams {
+                text_document: TextDocumentIdentifier {
+                    uri: Uri::from_str(uri).map_err(|_| LspError::invalid_uri(uri))?,
+                },
+                position,
+            },
+            ch,
+            options,
+        };
+
+        let response = server
+            .read()
+            .await
+            .request(
+                "textDocument/onTypeFormatting".to_string(),
+                Some(serde_json::to_value(params)?),
+            )
+            .await?;
+
+        let edits: Vec<TextEdit> = serde_json::from_value(response)?;
+        Ok(edits)
+    }
+
+    /// Get folding ranges.
+    pub async fn get_folding_ranges(
+        &self,
+        server_id: &str,
+        uri: &str,
+    ) -> Result<Option<Vec<FoldingRange>>> {
+        let server = self
+            .get_server(server_id)
+            .ok_or_else(|| LspError::server_not_found(server_id))?;
+
+        let params = FoldingRangeParams {
+            text_document: TextDocumentIdentifier {
+                uri: Uri::from_str(uri).map_err(|_| LspError::invalid_uri(uri))?,
+            },
+            work_done_progress_params: WorkDoneProgressParams::default(),
+            partial_result_params: PartialResultParams::default(),
+        };
+
+        let response = server
+            .read()
+            .await
+            .request(
+                "textDocument/foldingRange".to_string(),
+                Some(serde_json::to_value(params)?),
+            )
+            .await?;
+
+        if response.is_null() {
+            Ok(None)
+        } else {
+            let ranges: Vec<FoldingRange> = serde_json::from_value(response)?;
+            Ok(Some(ranges))
+        }
+    }
+
+    /// Get selection ranges.
+    pub async fn get_selection_ranges(
+        &self,
+        server_id: &str,
+        uri: &str,
+        positions: Vec<Position>,
+    ) -> Result<Option<Vec<SelectionRange>>> {
+        let server = self
+            .get_server(server_id)
+            .ok_or_else(|| LspError::server_not_found(server_id))?;
+
+        let params = SelectionRangeParams {
+            text_document: TextDocumentIdentifier {
+                uri: Uri::from_str(uri).map_err(|_| LspError::invalid_uri(uri))?,
+            },
+            positions,
+            work_done_progress_params: WorkDoneProgressParams::default(),
+            partial_result_params: PartialResultParams::default(),
+        };
+
+        let response = server
+            .read()
+            .await
+            .request(
+                "textDocument/selectionRange".to_string(),
+                Some(serde_json::to_value(params)?),
+            )
+            .await?;
+
+        if response.is_null() {
+            Ok(None)
+        } else {
+            let ranges: Vec<SelectionRange> = serde_json::from_value(response)?;
+            Ok(Some(ranges))
+        }
+    }
+
+    /// Execute a command.
+    pub async fn execute_command(
+        &self,
+        server_id: &str,
+        command: String,
+        arguments: Option<Vec<serde_json::Value>>,
+    ) -> Result<Option<serde_json::Value>> {
+        let server = self
+            .get_server(server_id)
+            .ok_or_else(|| LspError::server_not_found(server_id))?;
+
+        let params = ExecuteCommandParams {
+            command,
+            arguments: arguments.unwrap_or_default(),
+            work_done_progress_params: WorkDoneProgressParams::default(),
+        };
+
+        let response = server
+            .read()
+            .await
+            .request(
+                "workspace/executeCommand".to_string(),
+                Some(serde_json::to_value(params)?),
+            )
+            .await?;
+
+        if response.is_null() {
+            Ok(None)
+        } else {
+            Ok(Some(response))
+        }
+    }
+
+    /// Prepare call hierarchy.
+    pub async fn prepare_call_hierarchy(
+        &self,
+        server_id: &str,
+        uri: &str,
+        position: Position,
+    ) -> Result<Option<Vec<CallHierarchyItem>>> {
+        let server = self
+            .get_server(server_id)
+            .ok_or_else(|| LspError::server_not_found(server_id))?;
+
+        let params = CallHierarchyPrepareParams {
+            text_document_position_params: TextDocumentPositionParams {
+                text_document: TextDocumentIdentifier {
+                    uri: Uri::from_str(uri).map_err(|_| LspError::invalid_uri(uri))?,
+                },
+                position,
+            },
+            work_done_progress_params: WorkDoneProgressParams::default(),
+        };
+
+        let response = server
+            .read()
+            .await
+            .request(
+                "textDocument/prepareCallHierarchy".to_string(),
+                Some(serde_json::to_value(params)?),
+            )
+            .await?;
+
+        if response.is_null() {
+            Ok(None)
+        } else {
+            let items: Vec<CallHierarchyItem> = serde_json::from_value(response)?;
+            Ok(Some(items))
+        }
+    }
+
+    /// Get incoming calls.
+    pub async fn get_incoming_calls(
+        &self,
+        server_id: &str,
+        item: CallHierarchyItem,
+    ) -> Result<Option<Vec<CallHierarchyIncomingCall>>> {
+        let server = self
+            .get_server(server_id)
+            .ok_or_else(|| LspError::server_not_found(server_id))?;
+
+        let params = CallHierarchyIncomingCallsParams {
+            item,
+            work_done_progress_params: WorkDoneProgressParams::default(),
+            partial_result_params: PartialResultParams::default(),
+        };
+
+        let response = server
+            .read()
+            .await
+            .request(
+                "callHierarchy/incomingCalls".to_string(),
+                Some(serde_json::to_value(params)?),
+            )
+            .await?;
+
+        if response.is_null() {
+            Ok(None)
+        } else {
+            let calls: Vec<CallHierarchyIncomingCall> = serde_json::from_value(response)?;
+            Ok(Some(calls))
+        }
+    }
+
+    /// Get outgoing calls.
+    pub async fn get_outgoing_calls(
+        &self,
+        server_id: &str,
+        item: CallHierarchyItem,
+    ) -> Result<Option<Vec<CallHierarchyOutgoingCall>>> {
+        let server = self
+            .get_server(server_id)
+            .ok_or_else(|| LspError::server_not_found(server_id))?;
+
+        let params = CallHierarchyOutgoingCallsParams {
+            item,
+            work_done_progress_params: WorkDoneProgressParams::default(),
+            partial_result_params: PartialResultParams::default(),
+        };
+
+        let response = server
+            .read()
+            .await
+            .request(
+                "callHierarchy/outgoingCalls".to_string(),
+                Some(serde_json::to_value(params)?),
+            )
+            .await?;
+
+        if response.is_null() {
+            Ok(None)
+        } else {
+            let calls: Vec<CallHierarchyOutgoingCall> = serde_json::from_value(response)?;
+            Ok(Some(calls))
+        }
+    }
+
+    /// Get semantic tokens (full).
+    pub async fn get_semantic_tokens_full(
+        &self,
+        server_id: &str,
+        uri: &str,
+    ) -> Result<Option<SemanticTokens>> {
+        let server = self
+            .get_server(server_id)
+            .ok_or_else(|| LspError::server_not_found(server_id))?;
+
+        let params = SemanticTokensParams {
+            text_document: TextDocumentIdentifier {
+                uri: Uri::from_str(uri).map_err(|_| LspError::invalid_uri(uri))?,
+            },
+            work_done_progress_params: WorkDoneProgressParams::default(),
+            partial_result_params: PartialResultParams::default(),
+        };
+
+        let response = server
+            .read()
+            .await
+            .request(
+                "textDocument/semanticTokens/full".to_string(),
+                Some(serde_json::to_value(params)?),
+            )
+            .await?;
+
+        if response.is_null() {
+            Ok(None)
+        } else {
+            let tokens: SemanticTokens = serde_json::from_value(response)?;
+            Ok(Some(tokens))
+        }
+    }
+
+    /// Get semantic tokens (delta).
+    pub async fn get_semantic_tokens_delta(
+        &self,
+        server_id: &str,
+        uri: &str,
+        previous_result_id: String,
+    ) -> Result<Option<SemanticTokensResult>> {
+        let server = self
+            .get_server(server_id)
+            .ok_or_else(|| LspError::server_not_found(server_id))?;
+
+        let params = SemanticTokensDeltaParams {
+            text_document: TextDocumentIdentifier {
+                uri: Uri::from_str(uri).map_err(|_| LspError::invalid_uri(uri))?,
+            },
+            previous_result_id,
+            work_done_progress_params: WorkDoneProgressParams::default(),
+            partial_result_params: PartialResultParams::default(),
+        };
+
+        let response = server
+            .read()
+            .await
+            .request(
+                "textDocument/semanticTokens/full/delta".to_string(),
+                Some(serde_json::to_value(params)?),
+            )
+            .await?;
+
+        if response.is_null() {
+            Ok(None)
+        } else {
+            let result: SemanticTokensResult = serde_json::from_value(response)?;
+            Ok(Some(result))
+        }
+    }
+
+    /// Get semantic tokens (range).
+    pub async fn get_semantic_tokens_range(
+        &self,
+        server_id: &str,
+        uri: &str,
+        range: Range,
+    ) -> Result<Option<SemanticTokens>> {
+        let server = self
+            .get_server(server_id)
+            .ok_or_else(|| LspError::server_not_found(server_id))?;
+
+        let params = SemanticTokensRangeParams {
+            text_document: TextDocumentIdentifier {
+                uri: Uri::from_str(uri).map_err(|_| LspError::invalid_uri(uri))?,
+            },
+            range,
+            work_done_progress_params: WorkDoneProgressParams::default(),
+            partial_result_params: PartialResultParams::default(),
+        };
+
+        let response = server
+            .read()
+            .await
+            .request(
+                "textDocument/semanticTokens/range".to_string(),
+                Some(serde_json::to_value(params)?),
+            )
+            .await?;
+
+        if response.is_null() {
+            Ok(None)
+        } else {
+            let tokens: SemanticTokens = serde_json::from_value(response)?;
+            Ok(Some(tokens))
+        }
+    }
+
+    /// Get inlay hints.
+    pub async fn get_inlay_hints(
+        &self,
+        server_id: &str,
+        uri: &str,
+        range: Range,
+    ) -> Result<Option<Vec<InlayHint>>> {
+        let server = self
+            .get_server(server_id)
+            .ok_or_else(|| LspError::server_not_found(server_id))?;
+
+        let params = InlayHintParams {
+            text_document: TextDocumentIdentifier {
+                uri: Uri::from_str(uri).map_err(|_| LspError::invalid_uri(uri))?,
+            },
+            range,
+            work_done_progress_params: WorkDoneProgressParams::default(),
+        };
+
+        let response = server
+            .read()
+            .await
+            .request(
+                "textDocument/inlayHint".to_string(),
+                Some(serde_json::to_value(params)?),
+            )
+            .await?;
+
+        if response.is_null() {
+            Ok(None)
+        } else {
+            let hints: Vec<InlayHint> = serde_json::from_value(response)?;
+            Ok(Some(hints))
+        }
+    }
+
+    /// Resolve inlay hint.
+    pub async fn resolve_inlay_hint(
+        &self,
+        server_id: &str,
+        hint: InlayHint,
+    ) -> Result<InlayHint> {
+        let server = self
+            .get_server(server_id)
+            .ok_or_else(|| LspError::server_not_found(server_id))?;
+
+        let response = server
+            .read()
+            .await
+            .request(
+                "inlayHint/resolve".to_string(),
+                Some(serde_json::to_value(hint)?),
+            )
+            .await?;
+
+        let resolved_hint: InlayHint = serde_json::from_value(response)?;
+        Ok(resolved_hint)
+    }
+
+    /// Get inline values.
+    pub async fn get_inline_values(
+        &self,
+        server_id: &str,
+        uri: &str,
+        range: Range,
+        context: InlineValueContext,
+    ) -> Result<Option<Vec<InlineValue>>> {
+        let server = self
+            .get_server(server_id)
+            .ok_or_else(|| LspError::server_not_found(server_id))?;
+
+        let params = InlineValueParams {
+            text_document: TextDocumentIdentifier {
+                uri: Uri::from_str(uri).map_err(|_| LspError::invalid_uri(uri))?,
+            },
+            range,
+            context,
+            work_done_progress_params: WorkDoneProgressParams::default(),
+        };
+
+        let response = server
+            .read()
+            .await
+            .request(
+                "textDocument/inlineValue".to_string(),
+                Some(serde_json::to_value(params)?),
+            )
+            .await?;
+
+        if response.is_null() {
+            Ok(None)
+        } else {
+            let values: Vec<InlineValue> = serde_json::from_value(response)?;
+            Ok(Some(values))
+        }
+    }
+
+    /// Get monikers.
+    pub async fn get_monikers(
+        &self,
+        server_id: &str,
+        uri: &str,
+        position: Position,
+    ) -> Result<Option<Vec<Moniker>>> {
+        let server = self
+            .get_server(server_id)
+            .ok_or_else(|| LspError::server_not_found(server_id))?;
+
+        let params = MonikerParams {
+            text_document_position_params: TextDocumentPositionParams {
+                text_document: TextDocumentIdentifier {
+                    uri: Uri::from_str(uri).map_err(|_| LspError::invalid_uri(uri))?,
+                },
+                position,
+            },
+            work_done_progress_params: WorkDoneProgressParams::default(),
+            partial_result_params: PartialResultParams::default(),
+        };
+
+        let response = server
+            .read()
+            .await
+            .request(
+                "textDocument/moniker".to_string(),
+                Some(serde_json::to_value(params)?),
+            )
+            .await?;
+
+        if response.is_null() {
+            Ok(None)
+        } else {
+            let monikers: Vec<Moniker> = serde_json::from_value(response)?;
+            Ok(Some(monikers))
+        }
+    }
+
+    /// Get completion item resolve.
+    pub async fn resolve_completion_item(
+        &self,
+        server_id: &str,
+        item: CompletionItem,
+    ) -> Result<CompletionItem> {
+        let server = self
+            .get_server(server_id)
+            .ok_or_else(|| LspError::server_not_found(server_id))?;
+
+        let response = server
+            .read()
+            .await
+            .request(
+                "completionItem/resolve".to_string(),
+                Some(serde_json::to_value(item)?),
+            )
+            .await?;
+
+        let resolved_item: CompletionItem = serde_json::from_value(response)?;
+        Ok(resolved_item)
+    }
+
     // ...existing code...
 }
 

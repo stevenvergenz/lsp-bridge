@@ -13,19 +13,21 @@ This project adheres to the Rust community [Code of Conduct](https://www.rust-la
 - Rust (stable version 1.64 or higher)
 - Cargo
 - Git
-- For integration tests: 
+- For integration tests:
   - rust-analyzer (`cargo install rust-analyzer`)
   - typescript-language-server (`npm install -g typescript-language-server`)
 
 ### Development Environment Setup
 
 1. Clone the repository:
+
    ```bash
    git clone https://github.com/your-username/lsp-bridge.git
    cd lsp-bridge
    ```
 
 2. Install development dependencies:
+
    ```bash
    # Install formatting and linting tools
    rustup component add rustfmt clippy
@@ -35,11 +37,13 @@ This project adheres to the Rust community [Code of Conduct](https://www.rust-la
    ```
 
 3. Build the project:
+
    ```bash
    cargo build
    ```
 
 4. Run tests:
+
    ```bash
    cargo test
    # Or with nextest:
@@ -47,6 +51,7 @@ This project adheres to the Rust community [Code of Conduct](https://www.rust-la
    ```
 
 5. Run linting and formatting:
+
    ```bash
    cargo clippy -- -D warnings
    cargo fmt --check
@@ -166,6 +171,7 @@ See the [Architecture Document](./docs/ARCHITECTURE.md) for detailed design info
 ### Testing
 
 1. **Unit Tests**: Write tests for all public APIs
+
    ```rust
    #[cfg(test)]
    mod tests {
@@ -181,6 +187,7 @@ See the [Architecture Document](./docs/ARCHITECTURE.md) for detailed design info
 2. **Integration Tests**: Add tests to `tests/` directory for end-to-end scenarios
 
 3. **Documentation Tests**: Include code examples in documentation
+
    ```rust
    /// Example usage:
    /// ```
@@ -217,7 +224,7 @@ See the [Architecture Document](./docs/ARCHITECTURE.md) for detailed design info
 
 ### Coding Guidelines
 
-- Follow the Rust API Guidelines: https://rust-lang.github.io/api-guidelines/
+- Follow the Rust API Guidelines: <https://rust-lang.github.io/api-guidelines/>
 - All public API must have comprehensive documentation with examples
 - Ensure code passes `cargo clippy` without warnings
 - Format code with `cargo fmt`

@@ -28,7 +28,8 @@ use tracing::{debug, error, info, warn};
 /// Creating a new process and sending a message:
 ///
 /// ```no_run
-/// use lsp_bridge::{LspProcess, LspMessage, protocol::RequestId};
+/// use lsp_bridge::process::LspProcess;
+/// use lsp_bridge::{LspMessage, LspRequest, protocol::RequestId};
 /// use dashmap::DashMap;
 /// use tokio::process::Command;
 /// use std::sync::Arc;
@@ -45,7 +46,12 @@ use tracing::{debug, error, info, warn};
 ///     let process = LspProcess::new(child, pending_requests, server_id)?;
 ///     
 ///     // Send an initialization message
-///     let init_message = LspMessage::new_request(1, "initialize", serde_json::json!({}));
+///     let init_request = LspRequest::with_id(
+///         RequestId::Number(1),
+///         "initialize",
+///         Some(serde_json::json!({})),
+///     );
+///     let init_message = LspMessage::Request(init_request);
 ///     process.send_message(init_message)?;
 ///     
 ///     Ok(())
@@ -89,7 +95,8 @@ impl LspProcess {
     /// # Examples
     ///
     /// ```no_run
-    /// use lsp_bridge::{LspProcess, protocol::RequestId};
+    /// use lsp_bridge::process::LspProcess;
+    /// use lsp_bridge::protocol::RequestId;
     /// use dashmap::DashMap;
     /// use serde_json::Value;
     /// use std::sync::Arc;
@@ -157,21 +164,23 @@ impl LspProcess {
     /// # Examples
     ///
     /// ```no_run
-    /// # use lsp_bridge::{LspProcess, LspMessage};
+    /// # use lsp_bridge::process::LspProcess;
+    /// # use lsp_bridge::{LspMessage, LspRequest, protocol::RequestId};
     /// # use serde_json::json;
     /// # async fn example(process: LspProcess) -> lsp_bridge::Result<()> {
     /// // Create an initialize request
-    /// let initialize = LspMessage::new_request(
-    ///     1, 
+    /// let initialize_request = LspRequest::with_id(
+    ///     RequestId::Number(1),
     ///     "initialize",
-    ///     json!({
+    ///     Some(json!({
     ///         "capabilities": {
     ///             "textDocument": {
     ///                 "completion": { "dynamicRegistration": true }
     ///             }
     ///         }
-    ///     })
+    ///     })),
     /// );
+    /// let initialize = LspMessage::Request(initialize_request);
     ///
     /// // Send the message
     /// process.send_message(initialize)?;
@@ -202,7 +211,7 @@ impl LspProcess {
     /// # Examples
     ///
     /// ```no_run
-    /// # use lsp_bridge::LspProcess;
+    /// # use lsp_bridge::process::LspProcess;
     /// # async fn example(mut process: LspProcess) -> lsp_bridge::Result<()> {
     /// // Attempt graceful shutdown first (not shown)
     /// // ...
@@ -234,7 +243,7 @@ impl LspProcess {
     /// # Examples
     ///
     /// ```no_run
-    /// # use lsp_bridge::LspProcess;
+    /// # use lsp_bridge::process::LspProcess;
     /// # async fn example(mut process: LspProcess) -> lsp_bridge::Result<()> {
     /// // Wait for the process to exit
     /// let status = process.wait().await?;

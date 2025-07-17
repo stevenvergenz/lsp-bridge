@@ -201,10 +201,10 @@ async fn test_rust_analyzer_integration() {
         let server_id = bridge
             .register_server("rust-analyzer", config)
             .await
-            .map_err(|e| format!("Failed to register server: {}", e))?;
+            .map_err(|e| format!("Failed to register server: {e}"))?;
         
         bridge.start_server(&server_id).await
-            .map_err(|e| format!("Failed to start server: {}", e))?;
+            .map_err(|e| format!("Failed to start server: {e}"))?;
 
         // Allow server to initialize
         tokio::time::sleep(Duration::from_secs(5)).await;
@@ -212,7 +212,7 @@ async fn test_rust_analyzer_integration() {
         // Test document synchronization
         let file_path = workspace_path.join("src/main.rs");
         let file_content = std::fs::read_to_string(&file_path)
-            .map_err(|e| format!("Failed to read file: {}", e))?;
+            .map_err(|e| format!("Failed to read file: {e}"))?;
 
         bridge
             .open_document(
@@ -221,7 +221,7 @@ async fn test_rust_analyzer_integration() {
                 &file_content,
             )
             .await
-            .map_err(|e| format!("Failed to open document: {}", e))?;
+            .map_err(|e| format!("Failed to open document: {e}"))?;
 
         // Allow processing time
         tokio::time::sleep(Duration::from_secs(3)).await;
@@ -256,7 +256,7 @@ async fn test_rust_analyzer_integration() {
 
         // Shutdown cleanly
         bridge.stop_server(&server_id).await
-            .map_err(|e| format!("Failed to stop server: {}", e))?;
+            .map_err(|e| format!("Failed to stop server: {e}"))?;
         
         Ok::<(), String>(())
     })

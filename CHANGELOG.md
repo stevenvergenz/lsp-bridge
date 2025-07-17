@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+
 - Complete implementation of LSP 3.17 specification
 - Server lifecycle management (startup, shutdown, crash recovery)
 - Asynchronous communication with tokio runtime
@@ -28,9 +29,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Rate limiting and backpressure handling
 
 ### Core Features Implemented
+
 - **Bridge Management**: Multi-server coordination and routing
 - **Document Operations**: Open, close, update, and synchronization
-- **LSP Features**: 
+- **LSP Features**:
   - Code completion with filtering and ranking
   - Hover information with rich content
   - Go-to-definition with link support
@@ -45,6 +47,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Security**: Input validation, resource limits, and safe defaults
 
 ### Testing & Quality
+
 - Unit tests for all public APIs (34 passing tests)
 - Integration tests with real LSP servers
 - Performance benchmarks and profiling
@@ -54,6 +57,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Property-based testing for protocol compliance
 
 ### Documentation
+
 - Comprehensive API documentation with examples
 - Architecture documentation with diagrams
 - Contributing guidelines for new developers
@@ -62,6 +66,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Troubleshooting and debugging guide
 
 ### Development Tools
+
 - Automated CI/CD pipeline setup
 - Code formatting and linting with clippy
 - Performance regression detection
@@ -78,33 +83,41 @@ This project follows [Semantic Versioning](https://semver.org/):
 - **PATCH** (0.0.x): Bug fixes, backward compatible
 
 ### Pre-1.0.0 Versioning
+
 During the 0.x.x phase:
+
 - **MINOR** versions (0.x.0) may include breaking changes
 - **PATCH** versions (0.0.x) are for bug fixes and small improvements
 - Breaking changes will be clearly documented in the changelog
 
 ### API Stability Promise
+
 Starting with version 1.0.0:
+
 - Public APIs will follow strict semantic versioning
 - Breaking changes will only occur in major versions
 - Deprecation warnings will be provided for at least one minor version
 - Migration guides will be provided for major version upgrades
 
 ### Release Schedule
+
 - **Patch releases**: As needed for critical bug fixes
 - **Minor releases**: Monthly for new features and improvements  
 - **Major releases**: As needed for significant architectural changes
 
 ### Supported Rust Versions
+
 - **Minimum Supported Rust Version (MSRV)**: 1.64.0
 - MSRV changes are considered breaking changes
 - Support for the latest stable Rust version is guaranteed
 - Support for the previous 6 stable releases is maintained when possible
 
 ### Fixed
+
 - None (initial release)
 
 ### Security
+
 - Input validation for all messages received from LSP servers
 - Rate limiting for request frequencies
 - Resource limiting to prevent excessive memory usage

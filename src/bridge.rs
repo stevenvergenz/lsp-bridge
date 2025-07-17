@@ -318,6 +318,341 @@ impl LspBridge {
         self.client.list_servers()
     }
 
+    /// Get type definition for a symbol.
+    pub async fn get_type_definition(
+        &self,
+        server_id: &str,
+        uri: &str,
+        position: Position,
+    ) -> Result<Option<Location>> {
+        let response = self
+            .client
+            .get_type_definition(server_id, uri, position)
+            .await?;
+
+        match response {
+            Some(GotoDefinitionResponse::Scalar(location)) => Ok(Some(location)),
+            Some(GotoDefinitionResponse::Array(locations)) => Ok(locations.into_iter().next()),
+            Some(GotoDefinitionResponse::Link(links)) => {
+                Ok(links.into_iter().next().map(|link| Location {
+                    uri: link.target_uri,
+                    range: link.target_selection_range,
+                }))
+            }
+            None => Ok(None),
+        }
+    }
+
+    /// Get implementation for a symbol.
+    pub async fn get_implementation(
+        &self,
+        server_id: &str,
+        uri: &str,
+        position: Position,
+    ) -> Result<Option<Location>> {
+        let response = self
+            .client
+            .get_implementation(server_id, uri, position)
+            .await?;
+
+        match response {
+            Some(GotoDefinitionResponse::Scalar(location)) => Ok(Some(location)),
+            Some(GotoDefinitionResponse::Array(locations)) => Ok(locations.into_iter().next()),
+            Some(GotoDefinitionResponse::Link(links)) => {
+                Ok(links.into_iter().next().map(|link| Location {
+                    uri: link.target_uri,
+                    range: link.target_selection_range,
+                }))
+            }
+            None => Ok(None),
+        }
+    }
+
+    /// Get document highlights for a position.
+    pub async fn get_document_highlights(
+        &self,
+        server_id: &str,
+        uri: &str,
+        position: Position,
+    ) -> Result<Vec<DocumentHighlight>> {
+        self.client
+            .get_document_highlights(server_id, uri, position)
+            .await
+            .map(|highlights| highlights.unwrap_or_default())
+    }
+
+    /// Get code lens for a document.
+    pub async fn get_code_lens(
+        &self,
+        server_id: &str,
+        uri: &str,
+    ) -> Result<Vec<CodeLens>> {
+        self.client
+            .get_code_lens(server_id, uri)
+            .await
+            .map(|lens| lens.unwrap_or_default())
+    }
+
+    /// Resolve a code lens.
+    pub async fn resolve_code_lens(
+        &self,
+        server_id: &str,
+        code_lens: CodeLens,
+    ) -> Result<CodeLens> {
+        self.client.resolve_code_lens(server_id, code_lens).await
+    }
+
+    /// Get document links.
+    pub async fn get_document_links(
+        &self,
+        server_id: &str,
+        uri: &str,
+    ) -> Result<Vec<DocumentLink>> {
+        self.client
+            .get_document_links(server_id, uri)
+            .await
+            .map(|links| links.unwrap_or_default())
+    }
+
+    /// Resolve a document link.
+    pub async fn resolve_document_link(
+        &self,
+        server_id: &str,
+        link: DocumentLink,
+    ) -> Result<DocumentLink> {
+        self.client.resolve_document_link(server_id, link).await
+    }
+
+    /// Get document colors.
+    pub async fn get_document_colors(
+        &self,
+        server_id: &str,
+        uri: &str,
+    ) -> Result<Vec<ColorInformation>> {
+        self.client.get_document_colors(server_id, uri).await
+    }
+
+    /// Get color presentations.
+    pub async fn get_color_presentations(
+        &self,
+        server_id: &str,
+        uri: &str,
+        color: Color,
+        range: Range,
+    ) -> Result<Vec<ColorPresentation>> {
+        self.client
+            .get_color_presentations(server_id, uri, color, range)
+            .await
+    }
+
+    /// Format document range.
+    pub async fn format_document_range(
+        &self,
+        server_id: &str,
+        uri: &str,
+        range: Range,
+    ) -> Result<Vec<TextEdit>> {
+        let options = FormattingOptions {
+            tab_size: 4,
+            insert_spaces: true,
+            properties: HashMap::new(),
+            trim_trailing_whitespace: Some(true),
+            insert_final_newline: Some(true),
+            trim_final_newlines: Some(true),
+        };
+
+        self.client
+            .format_document_range(server_id, uri, range, options)
+            .await
+    }
+
+    /// Format document on type.
+    pub async fn format_document_on_type(
+        &self,
+        server_id: &str,
+        uri: &str,
+        position: Position,
+        ch: String,
+    ) -> Result<Vec<TextEdit>> {
+        let options = FormattingOptions {
+            tab_size: 4,
+            insert_spaces: true,
+            properties: HashMap::new(),
+            trim_trailing_whitespace: Some(true),
+            insert_final_newline: Some(true),
+            trim_final_newlines: Some(true),
+        };
+
+        self.client
+            .format_document_on_type(server_id, uri, position, ch, options)
+            .await
+    }
+
+    /// Get folding ranges.
+    pub async fn get_folding_ranges(
+        &self,
+        server_id: &str,
+        uri: &str,
+    ) -> Result<Vec<FoldingRange>> {
+        self.client
+            .get_folding_ranges(server_id, uri)
+            .await
+            .map(|ranges| ranges.unwrap_or_default())
+    }
+
+    /// Get selection ranges.
+    pub async fn get_selection_ranges(
+        &self,
+        server_id: &str,
+        uri: &str,
+        positions: Vec<Position>,
+    ) -> Result<Vec<SelectionRange>> {
+        self.client
+            .get_selection_ranges(server_id, uri, positions)
+            .await
+            .map(|ranges| ranges.unwrap_or_default())
+    }
+
+    /// Execute a command.
+    pub async fn execute_command(
+        &self,
+        server_id: &str,
+        command: String,
+        arguments: Option<Vec<serde_json::Value>>,
+    ) -> Result<Option<serde_json::Value>> {
+        self.client
+            .execute_command(server_id, command, arguments)
+            .await
+    }
+
+    /// Prepare call hierarchy.
+    pub async fn prepare_call_hierarchy(
+        &self,
+        server_id: &str,
+        uri: &str,
+        position: Position,
+    ) -> Result<Vec<CallHierarchyItem>> {
+        self.client
+            .prepare_call_hierarchy(server_id, uri, position)
+            .await
+            .map(|items| items.unwrap_or_default())
+    }
+
+    /// Get incoming calls.
+    pub async fn get_incoming_calls(
+        &self,
+        server_id: &str,
+        item: CallHierarchyItem,
+    ) -> Result<Vec<CallHierarchyIncomingCall>> {
+        self.client
+            .get_incoming_calls(server_id, item)
+            .await
+            .map(|calls| calls.unwrap_or_default())
+    }
+
+    /// Get outgoing calls.
+    pub async fn get_outgoing_calls(
+        &self,
+        server_id: &str,
+        item: CallHierarchyItem,
+    ) -> Result<Vec<CallHierarchyOutgoingCall>> {
+        self.client
+            .get_outgoing_calls(server_id, item)
+            .await
+            .map(|calls| calls.unwrap_or_default())
+    }
+
+    /// Get semantic tokens (full).
+    pub async fn get_semantic_tokens_full(
+        &self,
+        server_id: &str,
+        uri: &str,
+    ) -> Result<Option<SemanticTokens>> {
+        self.client.get_semantic_tokens_full(server_id, uri).await
+    }
+
+    /// Get semantic tokens (delta).
+    pub async fn get_semantic_tokens_delta(
+        &self,
+        server_id: &str,
+        uri: &str,
+        previous_result_id: String,
+    ) -> Result<Option<SemanticTokensResult>> {
+        self.client
+            .get_semantic_tokens_delta(server_id, uri, previous_result_id)
+            .await
+    }
+
+    /// Get semantic tokens (range).
+    pub async fn get_semantic_tokens_range(
+        &self,
+        server_id: &str,
+        uri: &str,
+        range: Range,
+    ) -> Result<Option<SemanticTokens>> {
+        self.client
+            .get_semantic_tokens_range(server_id, uri, range)
+            .await
+    }
+
+    /// Get inlay hints.
+    pub async fn get_inlay_hints(
+        &self,
+        server_id: &str,
+        uri: &str,
+        range: Range,
+    ) -> Result<Vec<InlayHint>> {
+        self.client
+            .get_inlay_hints(server_id, uri, range)
+            .await
+            .map(|hints| hints.unwrap_or_default())
+    }
+
+    /// Resolve inlay hint.
+    pub async fn resolve_inlay_hint(
+        &self,
+        server_id: &str,
+        hint: InlayHint,
+    ) -> Result<InlayHint> {
+        self.client.resolve_inlay_hint(server_id, hint).await
+    }
+
+    /// Get inline values.
+    pub async fn get_inline_values(
+        &self,
+        server_id: &str,
+        uri: &str,
+        range: Range,
+        context: InlineValueContext,
+    ) -> Result<Vec<InlineValue>> {
+        self.client
+            .get_inline_values(server_id, uri, range, context)
+            .await
+            .map(|values| values.unwrap_or_default())
+    }
+
+    /// Get monikers.
+    pub async fn get_monikers(
+        &self,
+        server_id: &str,
+        uri: &str,
+        position: Position,
+    ) -> Result<Vec<Moniker>> {
+        self.client
+            .get_monikers(server_id, uri, position)
+            .await
+            .map(|monikers| monikers.unwrap_or_default())
+    }
+
+    /// Resolve completion item.
+    pub async fn resolve_completion_item(
+        &self,
+        server_id: &str,
+        item: CompletionItem,
+    ) -> Result<CompletionItem> {
+        self.client.resolve_completion_item(server_id, item).await
+    }
+
     /// Shutdown all servers and cleanup.
     pub async fn shutdown(&mut self) -> Result<()> {
         info!("Shutting down LSP Bridge");

@@ -211,9 +211,18 @@
 //!     let _ = tokio::try_join!(task1, task2);
 //! }
 //! ```
+//! # Example Usage
 //!
+//! ```no_run
+//! use lsp_bridge::{LspBridge, LspServerConfig};
+//! use std::path::PathBuf;
+//!
+//! #[tokio::main]
+//! async fn main() -> Result<(), Box<dyn std::error::Error>> {
+//!     // Configure the LSP server
+//!     let config = LspServerConfig::new()
 //!         .command("rust-analyzer")
-//!         .root_path("/path/to/project");
+//!         .root_path(PathBuf::from("/path/to/project"));
 //!     
 //!     // Create and start the bridge
 //!     let mut bridge = LspBridge::new();
@@ -228,7 +237,7 @@
 //! }
 //! ```
 //!
-//! ## Performance
+//! # Performance
 //!
 //! The LSP Bridge is designed for high performance with:
 //! - Async/await throughout for non-blocking operations
