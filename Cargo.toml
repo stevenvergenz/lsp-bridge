@@ -1,0 +1,79 @@
+[package]
+name = "lsp-bridge"
+version = "0.1.0"
+edition = "2024"
+description = "A comprehensive Rust library that provides a bridge between Language Server Protocol (LSP) servers and clients"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/ciresnave/lsp-bridge"
+homepage = "https://github.com/ciresnave/lsp-bridge"
+documentation = "https://docs.rs/lsp-bridge"
+keywords = ["lsp", "language-server", "protocol", "bridge", "async"]
+categories = ["development-tools", "asynchronous", "parser-implementations"]
+authors = ["Eric Evans <ciresnave@gmail.com>"]
+readme = "README.md"
+exclude = [
+    "target/",
+    "benches/",
+    ".github/",
+    "examples/",
+    "tests/"
+]
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
+
+[dependencies]
+tokio = { version = "1.0", features = ["full"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+lsp-types = "0.97"
+async-trait = "0.1"
+thiserror = "2.0"
+dashmap = "6.1"
+futures = "0.3"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+uuid = { version = "1.0", features = ["v4"] }
+rand = "0.9"
+url = "2.4"
+
+[dev-dependencies]
+tokio-test = "0.4"
+tempfile = "3.8"
+criterion = { version = "0.6", features = ["html_reports"] }
+tokio = { version = "1.0", features = ["test-util", "macros"] }
+rand = "0.9"
+
+[[bench]]
+name = "performance"
+harness = false
+
+[features]
+default = ["diagnostics", "completion", "formatting"]
+diagnostics = []
+completion = []
+formatting = []
+references = []
+definitions = []
+hover = []
+rename = []
+code-actions = []
+workspace-symbols = []
+document-symbols = []
+semantic-tokens = []
+inlay-hints = []
+full = [
+    "diagnostics",
+    "completion", 
+    "formatting",
+    "references",
+    "definitions",
+    "hover",
+    "rename",
+    "code-actions",
+    "workspace-symbols",
+    "document-symbols",
+    "semantic-tokens",
+    "inlay-hints"
+]
