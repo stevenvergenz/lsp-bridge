@@ -16,7 +16,11 @@ exclude = [
     "benches/",
     ".github/",
     "examples/",
-    "tests/"
+    "tests/",
+    "docs/",
+    "*.md",
+    ".vscode/",
+    ".cargo/"
 ]
 
 [package.metadata.docs.rs]
