@@ -257,6 +257,7 @@ pub mod hardening;
 pub mod monitoring;
 pub mod process;
 pub mod protocol;
+pub mod response;
 pub mod server;
 pub mod utils; // Add process module
 
