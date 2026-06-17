@@ -6,6 +6,7 @@ use crate::process::LspProcess;
 use crate::protocol::{
     LspMessage, LspRequest, LspNotification, RequestId, ServerCapabilities,
 };
+use crate::response::LspMessageHandler;
 use async_trait::async_trait;
 use dashmap::DashMap;
 use serde_json::Value;
@@ -46,11 +47,12 @@ pub struct LspServer {
     pending_requests: Arc<DashMap<RequestId, oneshot::Sender<Result<Value>>>>,
     restart_count: Arc<RwLock<u32>>,
     last_restart: Arc<RwLock<Option<Instant>>>,
+    msg_handler: Arc<LspMessageHandler>,
 }
 
 impl LspServer {
     /// Create a new LSP server instance.
-    pub fn new<I: Into<String>>(id: I, config: LspServerConfig) -> Self {
+    pub fn new<I: Into<String>>(id: I, config: LspServerConfig, msg_handler: LspMessageHandler) -> Self {
         Self {
             id: id.into(),
             config,
@@ -60,6 +62,7 @@ impl LspServer {
             pending_requests: Arc::new(DashMap::new()),
             restart_count: Arc::new(RwLock::new(0)),
             last_restart: Arc::new(RwLock::new(None)),
+            msg_handler: Arc::new(msg_handler),
         }
     }
 
@@ -110,6 +113,7 @@ impl LspServer {
         let lsp_process = LspProcess::new(
             child_process,
             self.pending_requests.clone(),
+            self.msg_handler.clone(),
             self.id.clone(),
         )?;
         

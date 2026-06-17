@@ -3,6 +3,7 @@
 use crate::error::{LspError, Result};
 use crate::protocol::{LspMessage, RequestId};
 use crate::response::LspMessageHandler;
+use crate::LspNotification;
 use dashmap::DashMap;
 use serde_json::Value;
 use std::sync::Arc;
@@ -119,6 +120,7 @@ impl LspProcess {
     pub fn new(
         mut process: Child,
         pending_requests: Arc<DashMap<RequestId, oneshot::Sender<Result<Value>>>>,
+        msg_handler: Arc<LspMessageHandler>,
         server_id: String,
     ) -> Result<Self> {
         let stdin = process.stdin.take().ok_or_else(|| {
@@ -133,7 +135,7 @@ impl LspProcess {
 
         // Start communication tasks
         let writer_handle = Self::start_writer_task(stdin, message_rx, server_id.clone());
-        let reader_handle = Self::start_reader_task(stdout, pending_requests, server_id);
+        let reader_handle = Self::start_reader_task(stdout, pending_requests, msg_handler, server_id);
 
         let handles = vec![writer_handle, reader_handle];
 
@@ -291,6 +293,7 @@ impl LspProcess {
     fn start_reader_task(
         stdout: ChildStdout,
         pending_requests: Arc<DashMap<RequestId, oneshot::Sender<Result<Value>>>>,
+        msg_handler: Arc<LspMessageHandler>,
         server_id: String,
     ) -> tokio::task::JoinHandle<()> {
         tokio::spawn(async move {
@@ -299,7 +302,7 @@ impl LspProcess {
             loop {
                 match Self::read_message_internal(&mut reader).await {
                     Ok(content) => {
-                        if let Err(e) = Self::handle_incoming_message(&content, &pending_requests).await {
+                        if let Err(e) = Self::handle_incoming_message(&content, &pending_requests, &msg_handler).await {
                             error!("Failed to handle incoming message for server {}: {}", server_id, e);
                         }
                     }
@@ -397,7 +400,7 @@ impl LspProcess {
     async fn handle_incoming_message(
         content: &str,
         pending_requests: &DashMap<RequestId, oneshot::Sender<Result<Value>>>,
-        handlers: &Vec<Box<dyn LspMessageHandler>>,
+        msg_handler: &LspMessageHandler,
     ) -> Result<()> {
         let message: LspMessage = serde_json::from_str(content)
             .map_err(|e| LspError::protocol(format!("Failed to parse LSP message: {e}")))?;
@@ -415,59 +418,14 @@ impl LspProcess {
                 } else {
                     debug!("Received response for unknown request: {:?}", response.id);
                 }
-            }
-            LspMessage::Notification(notification) => {
-                debug!("Received notification: {}", notification.method);
-                // Handle server notifications (e.g., diagnostics, log messages)
-                match notification.method.as_str() {
-                    "textDocument/publishDiagnostics" => {
-                        info!("Received diagnostics notification");
-                        // Parse and route diagnostics to registered handlers
-                        if let Some(params) = notification.params {
-                            if let Ok(diagnostics) = serde_json::from_value::<lsp_types::PublishDiagnosticsParams>(params) {
-                                debug!("Received {} diagnostics for {:?}", 
-                                       diagnostics.diagnostics.len(),
-                                       diagnostics.uri);
-                                // The diagnostics are stored in the response and will be handled
-                                // by the LspServer/LspClient that receives this response
-                            }
-                        }
-                    }
-                    "window/logMessage" => {
-                        if let Some(params) = notification.params {
-                            if let Ok(log_msg) = serde_json::from_value::<lsp_types::LogMessageParams>(params) {
-                                match log_msg.typ {
-                                    lsp_types::MessageType::ERROR => error!("LSP Server: {}", log_msg.message),
-                                    lsp_types::MessageType::WARNING => warn!("LSP Server: {}", log_msg.message),
-                                    lsp_types::MessageType::INFO => info!("LSP Server: {}", log_msg.message),
-                                    lsp_types::MessageType::LOG => debug!("LSP Server: {}", log_msg.message),
-                                    _ => debug!("LSP Server: {}", log_msg.message),
-                                }
-                            }
-                        }
-                    }
-                    "window/showMessage" => {
-                        info!("Received show message notification");
-                        // Parse and log window messages
-                        if let Some(params) = notification.params {
-                            if let Ok(msg) = serde_json::from_value::<lsp_types::ShowMessageParams>(params) {
-                                match msg.typ {
-                                    lsp_types::MessageType::ERROR => error!("LSP Server Message: {}", msg.message),
-                                    lsp_types::MessageType::WARNING => warn!("LSP Server Message: {}", msg.message),
-                                    lsp_types::MessageType::INFO => info!("LSP Server Message: {}", msg.message),
-                                    lsp_types::MessageType::LOG => debug!("LSP Server Message: {}", msg.message),
-                                    _ => debug!("LSP Server Message (unknown type): {}", msg.message),
-                                }
-                                // The message is captured in logs and will be accessible to clients
-                                // that subscribe to the tracing events
-                            }
-                        }
-                    }
-                    _ => {
-                        debug!("Unhandled notification: {}", notification.method);
-                    }
+            },
+            LspMessage::Notification(LspNotification { method, params }) => {
+                if msg_handler.handle_notify(&method, params).is_some() {
+                    debug!("Handled request from server: {method}");
+                } else {
+                    warn!("Unhandled server notification: {method}");
                 }
-            }
+            },
             LspMessage::Request(request) => {
                 debug!("Received request from server: {}", request.method);
                 // Handle server requests (rare, but possible)

@@ -1,5 +1,7 @@
 //! Main LSP Bridge interface coordinating client-server communication.
 
+use crate::response::LspMessageHandler;
+use crate::{LspMessage, LspNotification};
 use crate::client::LspClient;
 use crate::config::LspServerConfig;
 use crate::error::{LspError, Result};

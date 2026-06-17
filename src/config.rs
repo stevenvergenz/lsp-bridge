@@ -1,6 +1,7 @@
 //! Configuration types and builders for LSP Bridge.
 
 use crate::error::{LspError, Result};
+use crate::response::LspMessageHandler;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
@@ -69,6 +70,7 @@ impl Default for LspServerConfig {
             settings: HashMap::new(),
             max_restart_attempts: 3,
             restart_delay: Duration::from_secs(2),
+            message_handler: LspMessageHandler::default(),
         }
     }
 }
