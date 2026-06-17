@@ -5,26 +5,51 @@ use tracing::{debug, error, info, warn};
 
 use crate::LspResponse;
 
-pub trait LspMessageHandler {
-    fn handle_notify(&self, method: &str, params: Option<Value>) -> impl Future<Output = Option<()>>;
-
-    fn handle_request(&self, method: &str, params: Option<Value>) -> impl Future<Output = Option<LspResponse>>;
+pub struct LspMessageHandler {
+    notif_handlers: DashMap<String, Box<dyn FnMut(&str, Option<&Value>) -> Option<()>>>,
+    req_handlers: DashMap<String, Box<dyn FnMut(&str, Option<&Value>) -> Option<LspResponse>>>,
 }
 
-pub struct LogMessageHandler;
-impl LspMessageHandler for LogMessageHandler {
-    async fn handle_notify(&self, method: &str, params: Option<Value>) -> Option<()> {
+impl LspMessageHandler {
+    pub fn new() -> Self {
+        Self {
+            notif_handlers: DashMap::new(),
+            req_handlers: DashMap::new(),
+        }
+    }
+
+    pub fn register_notify(&mut self, method: impl Into<String>, handler: impl FnMut(&str, Option<&Value>) -> Option<()>) {
+        self.notif_handlers.insert(method.into(), Box::new(handler));
+    }
+
+    pub async fn handle_notify(&self, method: &str, params: Option<&Value>) -> Option<()> {
+        if let Some(h) = self.notif_handlers.get(method) {
+            h(method, params)
+        } else {
+            None
+        }
+    }
+
+    pub async fn handle_request(&self, method: &str, params: Option<&Value>) -> Option<LspResponse> {
+        if let Some(h) = self.req_handlers.get(method) {
+            h(method, params)
+        } else {
+            None
+        }
+    }
+
+    async fn handle_log_notif(&self, method: &str, params: Option<&Value>) -> Option<()> {
         let param = match params {
             Some(p) => p,
             _ => return None,
         };
 
         let (typ, msg) = match method {
-            "window/logMessage" => match serde_json::from_value(param) {
+            "window/logMessage" => match serde_json::from_value(param.clone()) {
                 Ok(LogMessageParams { typ, message }) => (typ, message),
                 _ => return None,
             },
-            "window/showMessage" => match serde_json::from_value(param) {
+            "window/showMessage" => match serde_json::from_value(param.clone()) {
                 Ok(ShowMessageParams { typ, message }) => (typ, message),
                 _ => return None,
             },
@@ -41,8 +66,13 @@ impl LspMessageHandler for LogMessageHandler {
 
         Some(())
     }
+}
 
-    async fn handle_request(&self, _method: &str, _params: Option<Value>) -> Option<LspResponse> {
-        None
+impl Default for LspMessageHandler {
+    fn default() -> Self {
+        let mut s = Self::new();
+        s.register_notify("window/logMessage", Self::handle_log_notif);
+        s.register_notify("window/showMessage", Self::handle_log_notif);
+        s
     }
 }

@@ -2,6 +2,7 @@
 
 use crate::error::{LspError, Result};
 use crate::protocol::{LspMessage, RequestId};
+use crate::response::LspMessageHandler;
 use dashmap::DashMap;
 use serde_json::Value;
 use std::sync::Arc;
@@ -396,6 +397,7 @@ impl LspProcess {
     async fn handle_incoming_message(
         content: &str,
         pending_requests: &DashMap<RequestId, oneshot::Sender<Result<Value>>>,
+        handlers: &Vec<Box<dyn LspMessageHandler>>,
     ) -> Result<()> {
         let message: LspMessage = serde_json::from_str(content)
             .map_err(|e| LspError::protocol(format!("Failed to parse LSP message: {e}")))?;
